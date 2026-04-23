@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import streamlit as st
 from sklearn.ensemble import RandomForestClassifier
@@ -37,7 +38,7 @@ FEATURE_LABELS = {
 @st.cache_data
 def load_data() -> pd.DataFrame:
     data = pd.read_csv(DATA_PATH)
-    data[ZERO_AS_MISSING_COLUMNS] = data[ZERO_AS_MISSING_COLUMNS].replace(0, pd.NA)
+    data[ZERO_AS_MISSING_COLUMNS] = data[ZERO_AS_MISSING_COLUMNS].replace(0, np.nan)
     return data
 
 
@@ -181,4 +182,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
