@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     accuracy_score,
     f1_score,
@@ -16,11 +17,13 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 
 ROOT_DIR = Path(__file__).parent
 DATA_PATH = ROOT_DIR / "data" / "diabetes.csv"
 MODEL_PATH = ROOT_DIR / "models" / "diabetes_random_forest.joblib"
+MODEL_COMPARISON_PATH = ROOT_DIR / "reports" / "model_comparison.csv"
 TARGET_COLUMN = "Outcome"
 ZERO_AS_MISSING_COLUMNS = [
     "Glucose",
@@ -66,6 +69,35 @@ def build_pipeline() -> Pipeline:
     )
 
 
+def build_logistic_regression_pipeline() -> Pipeline:
+    return Pipeline(
+        steps=[
+            ("imputer", SimpleImputer(strategy="median")),
+            ("scaler", StandardScaler()),
+            (
+                "classifier",
+                LogisticRegression(
+                    max_iter=1000,
+                    random_state=42,
+                    class_weight="balanced",
+                ),
+            ),
+        ]
+    )
+
+
+def evaluate_model(model: Pipeline, x_test: pd.DataFrame, y_test: pd.Series) -> dict[str, float]:
+    predictions = model.predict(x_test)
+    probabilities = model.predict_proba(x_test)[:, 1]
+    return {
+        "accuracy": float(accuracy_score(y_test, predictions)),
+        "precision": float(precision_score(y_test, predictions)),
+        "recall": float(recall_score(y_test, predictions)),
+        "f1": float(f1_score(y_test, predictions)),
+        "roc_auc": float(roc_auc_score(y_test, probabilities)),
+    }
+
+
 def train_model(data: pd.DataFrame) -> dict[str, object]:
     x = data.drop(columns=TARGET_COLUMN)
     y = data[TARGET_COLUMN]
@@ -83,13 +115,7 @@ def train_model(data: pd.DataFrame) -> dict[str, object]:
 
     predictions = model.predict(x_test)
     probabilities = model.predict_proba(x_test)[:, 1]
-    metrics = {
-        "accuracy": float(accuracy_score(y_test, predictions)),
-        "precision": float(precision_score(y_test, predictions)),
-        "recall": float(recall_score(y_test, predictions)),
-        "f1": float(f1_score(y_test, predictions)),
-        "roc_auc": float(roc_auc_score(y_test, probabilities)),
-    }
+    metrics = evaluate_model(model, x_test, y_test)
 
     evaluation = pd.DataFrame(
         {
@@ -113,6 +139,43 @@ def train_model(data: pd.DataFrame) -> dict[str, object]:
     }
 
 
+def compare_models(data: pd.DataFrame) -> pd.DataFrame:
+    x = data.drop(columns=TARGET_COLUMN)
+    y = data[TARGET_COLUMN]
+
+    x_train, x_test, y_train, y_test = train_test_split(
+        x,
+        y,
+        test_size=0.2,
+        random_state=42,
+        stratify=y,
+    )
+
+    candidates = {
+        "Logistic Regression": build_logistic_regression_pipeline(),
+        "Random Forest": build_pipeline(),
+    }
+
+    rows = []
+    for name, model in candidates.items():
+        model.fit(x_train, y_train)
+        rows.append({"model": name, **evaluate_model(model, x_test, y_test)})
+
+    return pd.DataFrame(rows).sort_values("roc_auc", ascending=False)
+
+
+def save_model_comparison(
+    comparison: pd.DataFrame,
+    path: Path = MODEL_COMPARISON_PATH,
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    comparison.to_csv(path, index=False)
+
+
+def load_model_comparison(path: Path = MODEL_COMPARISON_PATH) -> pd.DataFrame:
+    return pd.read_csv(path)
+
+
 def save_model(bundle: dict[str, object], path: Path = MODEL_PATH) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(bundle, path)
@@ -120,4 +183,3 @@ def save_model(bundle: dict[str, object], path: Path = MODEL_PATH) -> None:
 
 def load_model(path: Path = MODEL_PATH) -> dict[str, object]:
     return joblib.load(path)
-

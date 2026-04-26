@@ -34,12 +34,22 @@ O modelo foi avaliado com uma divisao treino/teste estratificada, usando 20% dos
 | F1-score | 65.5% |
 | ROC AUC | 81.6% |
 
+## Comparacao de modelos
+
+Dois modelos foram treinados com a mesma divisao de treino/teste. O Random Forest foi mantido como modelo principal por apresentar o melhor ROC AUC.
+
+| Modelo | Acuracia | Precisao | Recall | F1-score | ROC AUC |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Random Forest | 73.4% | 60.0% | 72.2% | 65.5% | 81.6% |
+| Logistic Regression | 73.4% | 60.3% | 70.4% | 65.0% | 81.3% |
+
 ## Funcionalidades do app
 
 - Formulario lateral para informar dados do paciente.
 - Predicao ao vivo com probabilidade estimada.
 - Abas para predicao, metricas e exploracao dos dados.
 - Matriz de confusao.
+- Comparacao entre Logistic Regression e Random Forest.
 - Grafico de importancia das features.
 - Grafico de distribuicao por variavel.
 - Modelo salvo em `models/diabetes_random_forest.joblib`.
@@ -94,6 +104,8 @@ py -m streamlit run app.py
 |   +-- diabetes.csv
 +-- models/
     +-- diabetes_random_forest.joblib
++-- reports/
+    +-- model_comparison.csv
 ```
 
 ## Dataset

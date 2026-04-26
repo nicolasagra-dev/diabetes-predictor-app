@@ -7,10 +7,12 @@ from sklearn.metrics import confusion_matrix
 
 from diabetes_model import (
     FEATURE_LABELS,
+    MODEL_COMPARISON_PATH,
     MODEL_PATH,
     TARGET_COLUMN,
     load_data as read_data,
     load_model,
+    load_model_comparison,
     train_model,
 )
 
@@ -25,6 +27,13 @@ def get_model_bundle(data: pd.DataFrame) -> dict[str, object]:
     if MODEL_PATH.exists():
         return load_model()
     return train_model(data)
+
+
+@st.cache_data
+def get_model_comparison() -> pd.DataFrame | None:
+    if not MODEL_COMPARISON_PATH.exists():
+        return None
+    return load_model_comparison()
 
 
 def build_sidebar_inputs(data: pd.DataFrame) -> pd.DataFrame:
@@ -124,6 +133,7 @@ def main() -> None:
 
     data = load_data()
     bundle = get_model_bundle(data)
+    comparison = get_model_comparison()
     model = bundle["model"]
     importances = bundle["importances"]
     metrics = bundle["metrics"]
@@ -195,6 +205,15 @@ def main() -> None:
                 "probabilidade"
             ].map(lambda value: f"{value:.1%}")
             st.dataframe(formatted_evaluation.head(20), use_container_width=True)
+
+        if comparison is not None:
+            st.subheader("Comparacao de modelos")
+            formatted_comparison = comparison.copy()
+            for column in ["accuracy", "precision", "recall", "f1", "roc_auc"]:
+                formatted_comparison[column] = formatted_comparison[column].map(
+                    lambda value: f"{value:.1%}"
+                )
+            st.dataframe(formatted_comparison, hide_index=True, use_container_width=True)
 
     with data_tab:
         overview_col, chart_col = st.columns([0.9, 1.1])
