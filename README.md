@@ -131,7 +131,7 @@ Variavel alvo:
 
 1. Acesse [share.streamlit.io](https://share.streamlit.io/).
 2. Conecte sua conta GitHub.
-3. Escolha o repositorio `nicolasagra-dev/projeto-3`.
+3. Escolha o repositorio `nicolasagra-dev/diabetes-predictor-app`.
 4. Configure:
    - Branch: `main`
    - Main file path: `app.py`
