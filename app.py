@@ -1,110 +1,30 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import streamlit as st
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.impute import SimpleImputer
-from sklearn.metrics import (
-    accuracy_score,
-    confusion_matrix,
-    f1_score,
-    precision_score,
-    recall_score,
-    roc_auc_score,
+from sklearn.metrics import confusion_matrix
+
+from diabetes_model import (
+    FEATURE_LABELS,
+    MODEL_PATH,
+    TARGET_COLUMN,
+    load_data as read_data,
+    load_model,
+    train_model,
 )
-from sklearn.model_selection import train_test_split
-from sklearn.pipeline import Pipeline
-
-
-DATA_PATH = Path(__file__).parent / "data" / "diabetes.csv"
-TARGET_COLUMN = "Outcome"
-ZERO_AS_MISSING_COLUMNS = [
-    "Glucose",
-    "BloodPressure",
-    "SkinThickness",
-    "Insulin",
-    "BMI",
-]
-
-FEATURE_LABELS = {
-    "Pregnancies": "Gestacoes",
-    "Glucose": "Glicose",
-    "BloodPressure": "Pressao arterial",
-    "SkinThickness": "Espessura da pele",
-    "Insulin": "Insulina",
-    "BMI": "IMC",
-    "DiabetesPedigreeFunction": "Historico familiar",
-    "Age": "Idade",
-}
 
 
 @st.cache_data
 def load_data() -> pd.DataFrame:
-    data = pd.read_csv(DATA_PATH)
-    data[ZERO_AS_MISSING_COLUMNS] = data[ZERO_AS_MISSING_COLUMNS].replace(0, np.nan)
-    return data
+    return read_data()
 
 
 @st.cache_resource
-def train_model(
-    data: pd.DataFrame,
-) -> tuple[Pipeline, pd.Series, dict[str, float], pd.DataFrame]:
-    x = data.drop(columns=TARGET_COLUMN)
-    y = data[TARGET_COLUMN]
-
-    x_train, x_test, y_train, y_test = train_test_split(
-        x,
-        y,
-        test_size=0.2,
-        random_state=42,
-        stratify=y,
-    )
-
-    model = Pipeline(
-        steps=[
-            ("imputer", SimpleImputer(strategy="median")),
-            (
-                "classifier",
-                RandomForestClassifier(
-                    n_estimators=300,
-                    max_depth=6,
-                    min_samples_leaf=4,
-                    random_state=42,
-                    class_weight="balanced",
-                ),
-            ),
-        ]
-    )
-    model.fit(x_train, y_train)
-
-    predictions = model.predict(x_test)
-    probabilities = model.predict_proba(x_test)[:, 1]
-    metrics = {
-        "accuracy": accuracy_score(y_test, predictions),
-        "precision": precision_score(y_test, predictions),
-        "recall": recall_score(y_test, predictions),
-        "f1": f1_score(y_test, predictions),
-        "roc_auc": roc_auc_score(y_test, probabilities),
-    }
-
-    evaluation = pd.DataFrame(
-        {
-            "real": y_test.to_numpy(),
-            "predicao": predictions,
-            "probabilidade": probabilities,
-        }
-    )
-
-    importances = pd.Series(
-        model.named_steps["classifier"].feature_importances_,
-        index=x.columns,
-    ).sort_values(ascending=True)
-
-    return model, importances, metrics, evaluation
+def get_model_bundle(data: pd.DataFrame) -> dict[str, object]:
+    if MODEL_PATH.exists():
+        return load_model()
+    return train_model(data)
 
 
 def build_sidebar_inputs(data: pd.DataFrame) -> pd.DataFrame:
@@ -203,7 +123,11 @@ def main() -> None:
     )
 
     data = load_data()
-    model, importances, metrics, evaluation = train_model(data)
+    bundle = get_model_bundle(data)
+    model = bundle["model"]
+    importances = bundle["importances"]
+    metrics = bundle["metrics"]
+    evaluation = bundle["evaluation"]
     patient_data = build_sidebar_inputs(data)
 
     probability = model.predict_proba(patient_data)[0, 1]
