@@ -4,13 +4,19 @@ Aplicativo de Machine Learning feito com Streamlit e Scikit-Learn para estimar r
 
 ![Screenshot do app](assets/app-screenshot.png)
 
+## Visao geral
+
+Este projeto transforma um modelo de classificacao em uma aplicacao interativa: o usuario informa variaveis clinicas, o app retorna uma probabilidade estimada e apresenta metricas do modelo, matriz de confusao, comparacao entre algoritmos e importancia das features.
+
+> Uso exclusivamente educacional. A predicao nao substitui avaliacao medica, exames laboratoriais ou orientacao profissional.
+
 ## App ao vivo
 
-Link do Streamlit Cloud: adicione aqui o link gerado apos o deploy.
+O projeto esta pronto para deploy no Streamlit Cloud. Depois de publicar, adicione o link aqui e no campo "Website" do repositorio.
 
-Sugestao para o curriculo:
+Sugestao para curriculo:
 
-`Diabetes Predictor App | Python, Scikit-Learn, Streamlit | COLE_AQUI_O_LINK_DO_STREAMLIT`
+`Diabetes Predictor App | Python, Scikit-Learn, Streamlit | app interativo de ML com metricas, matriz de confusao e explicabilidade por importancia de features`
 
 ## Objetivo
 
@@ -53,6 +59,14 @@ Dois modelos foram treinados com a mesma divisao de treino/teste. O Random Fores
 - Grafico de importancia das features.
 - Grafico de distribuicao por variavel.
 - Modelo salvo em `models/diabetes_random_forest.joblib`.
+
+## O que este projeto demonstra
+
+- Criacao de pipeline de Machine Learning com tratamento de valores ausentes.
+- Separacao entre treino do modelo (`train_model.py`), logica de ML (`diabetes_model.py`) e interface (`app.py`).
+- Uso de metricas adequadas para classificacao binaria: acuracia, precisao, recall, F1-score e ROC AUC.
+- Comparacao entre modelos simples antes da escolha do modelo final.
+- Comunicacao responsavel de resultados em um problema sensivel de saude.
 
 ## Tecnologias
 
@@ -136,9 +150,9 @@ Variavel alvo:
    - Branch: `main`
    - Main file path: `app.py`
 5. Clique em Deploy.
-6. Copie o link gerado e substitua o campo "Link do Streamlit Cloud" neste README.
-7. Use o mesmo link no curriculo.
+6. Copie o link gerado e adicione na secao "App ao vivo" deste README.
+7. Adicione o mesmo link no campo "Website" do repositorio e no curriculo.
 
 ## Limitacoes
 
-Este projeto tem finalidade educacional. O dataset e pequeno, e a predicao nao substitui avaliacao medica, exames ou orientacao profissional.
+Este projeto tem finalidade educacional. O dataset e pequeno, vem de um recorte especifico e pode conter vieses. As variaveis de entrada nao representam uma avaliacao clinica completa, e o resultado do modelo nao deve ser usado para diagnostico ou tomada de decisao medica.
